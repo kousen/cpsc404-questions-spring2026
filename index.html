@@ -70,6 +70,14 @@
             margin-left: 0.5rem;
         }
 
+        .keyboard-hint {
+            font-size: 0.85rem;
+            color: #556677;
+            margin-top: 0.5rem;
+            text-align: center;
+            width: 100%;
+        }
+
         .question-card {
             background: #16213e;
             border: 2px solid #0f3460;
@@ -78,9 +86,12 @@
             max-width: 900px;
             width: 100%;
             min-height: 200px;
+            max-height: 70vh;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
             justify-content: center;
+            position: relative;
         }
 
         .question-card .author {
@@ -103,6 +114,19 @@
 
         .question-card .content strong {
             color: #a0c4ff;
+        }
+
+        .scroll-hint {
+            text-align: center;
+            color: #7b8fa1;
+            font-size: 0.9rem;
+            padding-top: 0.5rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
         }
 
         .placeholder {
@@ -135,6 +159,7 @@
         <button id="pickBtn" disabled>Pick a Question</button>
         <button id="resetBtn" disabled>Reset Pool</button>
         <span class="status" id="status"></span>
+        <div class="keyboard-hint">Space / → = next question &nbsp;·&nbsp; R = reset pool</div>
     </div>
 
     <div class="question-card" id="card">
@@ -155,15 +180,27 @@
         let allQuestions = [];   // full set for selected week
         let remaining = [];      // not yet shown
 
+        // Friendly week labels from folder names
+        const WEEK_LABELS = {
+            'week02-chapter01': 'Week 2 — Ch 1: Making Inevitable Conflict Productive',
+            'week03-chapter02': 'Week 3 — Ch 2: Giving Good-Enough Answers',
+            'week04-chapter03': 'Week 4 — Ch 3: Creating Constructive Loyalty',
+            'week06-dual-reading': 'Week 6 — Ch 4 + ProducingOSS Ch 8',
+            'week07-chapter05-async': 'Week 7 — Ch 5: Winning the Prisoner\'s Dilemma',
+            'week08-dual-reading': 'Week 8 — Ch 6 + ProducingOSS Ch 6',
+            'week10-dual-reading': 'Week 10 — Ch 7 + ProducingOSS Ch 4',
+            'week11-chapter08': 'Week 11 — Ch 8: Your Boss Is Not Your Friend',
+            'week12-chapter09': 'Week 12 — Ch 9: Dealing with Special Cases',
+            'week13-chapter10': 'Week 13 — Ch 10: Managing Your Manager',
+        };
+
         // Strip metadata lines (Student, Date, headings) and keep just the question content
         function cleanBody(text) {
             return text
                 .split('\n')
                 .filter(line => {
                     const trimmed = line.trim();
-                    // Remove top-level and second-level headings
                     if (/^#{1,2}\s/.test(trimmed)) return false;
-                    // Remove **Student:** and **Date:** lines
                     if (/^\*\*Student[:：]\*\*/i.test(trimmed)) return false;
                     if (/^\*\*Date[:：]\*\*/i.test(trimmed)) return false;
                     return true;
@@ -172,16 +209,19 @@
                 .trim();
         }
 
-        // Extract a readable author name from the filename
-        function authorFromFilename(filename) {
+        // Extract author name: prefer **Student:** line from body, fall back to filename
+        function extractAuthor(filename, body) {
+            const match = body.match(/\*\*Student[:：]\*\*\s*(.+)/i);
+            if (match) return match[1].trim();
             return filename
                 .replace('.md', '')
                 .replace(/[-_]/g, ' ')
                 .replace(/\b\w/g, c => c.toUpperCase());
         }
 
-        // Extract a friendly week label from the folder name
+        // Get a friendly label for a week folder
         function weekLabel(dirname) {
+            if (WEEK_LABELS[dirname]) return WEEK_LABELS[dirname];
             return dirname
                 .replace(/-/g, ' ')
                 .replace(/\b\w/g, c => c.toUpperCase());
@@ -221,12 +261,14 @@
                 const files = await res.json();
                 const mdFiles = files.filter(f => f.name.endsWith('.md') && f.name !== '.gitkeep');
 
-                // Fetch all question contents in parallel
                 const questions = await Promise.all(
                     mdFiles.map(async (f) => {
                         const r = await fetch(f.download_url);
                         const text = await r.text();
-                        return { author: authorFromFilename(f.name), body: text };
+                        return {
+                            author: extractAuthor(f.name, text),
+                            body: text
+                        };
                     })
                 );
 
@@ -235,7 +277,7 @@
                 updateStatus();
                 pickBtn.disabled = false;
                 resetBtn.disabled = false;
-                card.innerHTML = '<div class="placeholder">Ready — click "Pick a Question"</div>';
+                card.innerHTML = '<div class="placeholder">Ready — click "Pick a Question" or press Space</div>';
             } catch (err) {
                 card.innerHTML = `<div class="placeholder">Error loading questions: ${err.message}</div>`;
             }
@@ -245,17 +287,33 @@
             status.textContent = `${remaining.length} of ${allQuestions.length} remaining`;
         }
 
+        // Check if the card content overflows and show a scroll hint
+        function checkScroll() {
+            const existing = card.querySelector('.scroll-hint');
+            if (existing) existing.remove();
+
+            if (card.scrollHeight > card.clientHeight + 10) {
+                const hint = document.createElement('div');
+                hint.className = 'scroll-hint';
+                hint.textContent = '↓ scroll for more ↓';
+                card.appendChild(hint);
+            }
+        }
+
         function showQuestion(q) {
             const rendered = marked.parse(cleanBody(q.body));
             card.innerHTML = `
                 <div class="author">${q.author}</div>
                 <div class="content">${rendered}</div>
             `;
+            card.scrollTop = 0;
+            // Check after render
+            requestAnimationFrame(checkScroll);
         }
 
         function pickRandom() {
             if (remaining.length === 0) {
-                card.innerHTML = '<div class="done-message">All questions have been shown!<br>Click "Reset Pool" to start over.</div>';
+                card.innerHTML = '<div class="done-message">All questions have been shown!<br>Click "Reset Pool" or press R to start over.</div>';
                 pickBtn.disabled = true;
                 updateStatus();
                 return;
@@ -269,6 +327,13 @@
             if (remaining.length === 0) {
                 pickBtn.disabled = true;
             }
+        }
+
+        function resetPool() {
+            remaining = [...allQuestions];
+            updateStatus();
+            pickBtn.disabled = false;
+            card.innerHTML = '<div class="placeholder">Pool reset — click "Pick a Question" or press Space</div>';
         }
 
         // Event listeners
@@ -287,12 +352,20 @@
         });
 
         pickBtn.addEventListener('click', pickRandom);
+        resetBtn.addEventListener('click', resetPool);
 
-        resetBtn.addEventListener('click', () => {
-            remaining = [...allQuestions];
-            updateStatus();
-            pickBtn.disabled = false;
-            card.innerHTML = '<div class="placeholder">Pool reset — click "Pick a Question"</div>';
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ignore if focus is on the select dropdown
+            if (e.target === weekSelect) return;
+
+            if ((e.key === ' ' || e.key === 'ArrowRight') && !pickBtn.disabled) {
+                e.preventDefault();
+                pickRandom();
+            } else if ((e.key === 'r' || e.key === 'R') && !resetBtn.disabled) {
+                e.preventDefault();
+                resetPool();
+            }
         });
 
         // Start
