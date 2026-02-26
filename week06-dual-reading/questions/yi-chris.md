@@ -1,4 +1,4 @@
-# Week 2 Question - Dual Reading
+# Week 6 Question - Dual Reading
 
 **Student:** Chris Yi
 **Date:** February 25, 2026
