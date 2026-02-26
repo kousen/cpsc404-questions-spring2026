@@ -1,0 +1,3 @@
+Both Help Your Boss Help You (Chapter 4) and Producing Open Source Software (Chapter 8) emphasize the importance of clear communication and managing expectations between leaders and contributors. In a traditional workplace, employees are encouraged to send their boss “the two important messages” to stay aligned, while open source projects rely on transparent communication to coordinate largely voluntary participants.
+
+How do the communication strategies used to manage a boss-employee relationship compare to those used to manage contributors in open source projects, where authority is weaker or informal? Which approach is more effective for motivating people and why?
