@@ -1,6 +1,6 @@
-## Week 12 – Chapter 8 Question  
+## Week 13 – Chapter 9 Question  
 **Shazif Ahmed**
 
-Chapter 8 argues that maintaining a certain level of emotional distance from your boss is necessary, even when the relationship feels friendly, and warns against the risks of oversharing personal information. It also highlights how workplace dynamics can shift when a peer or friend becomes your manager.
+Chapter 9 discusses special cases such as flat organizations, remote work environments, micromanagers, and unethical managers, showing how standard workplace strategies don’t always apply in these contexts.
 
-even in modern workplaces that emphasize openness and authenticity, how can employees balance being genuine with maintaining professional boundaries? At what point does “authentic communication” become harmful oversharing, especially when power dynamics can shift unexpectedly (e.g., when a friend becomes your boss)?
+In situations where formal structure is weak (e.g., flat or remote teams), how should an employee respond when dealing with a micromanager or an unethical manager, given that traditional escalation paths (like HR or higher management) may be unclear or less accessible? Does the lack of structure make these situations harder to resolve, or does it create more flexibility for employees to bypass problematic authority?
